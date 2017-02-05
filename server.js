@@ -17,7 +17,7 @@ io.sockets.on('connection', function (socket) {
     //console.log("No of connection connected.." + connections.length);
 
     socket.on('disconnect', function (data) {
-        connections.splice(connections.indexOf(socket.username), 1);
+        users.splice(users.indexOf(socket.username), 1);
 
         updateUsernames();
         connections.splice(connections.indexOf(socket), 1);
