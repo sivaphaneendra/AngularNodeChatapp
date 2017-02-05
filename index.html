@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html ng-app="myapp">
+
+<head>
+    <title>Chat app</title>
+    <link href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body, .top-buffer{
+            margin-top:10px;
+        }
+
+        .tab-pane-conversation{
+            height:300px;
+            overflow-y:scroll;
+            width:100%;
+        }
+
+        .panel footer{
+            border-top: 1px solid #bce8f1;
+        }
+
+        #message{
+            width:85%;
+        }
+    </style>
+</head>
+
+<body ng-controller="myappController as myctrl">
+
+    <div class="container">
+        <div class="row top-buffer">
+            <label class="col-md-6"> {{myctrl.title}} </label>
+        </div>
+
+        <div class=" top-buffer " ng-if="myctrl.login">
+            <div class="row col-md-6 ">
+                <form>
+                    <div class="form-group ">
+                        <label for="username ">Username:</label>
+                        <input type="text " class="form-control " id="username " ng-model="myctrl.username " />
+                    </div>
+
+                    <button type="submit " class="btn btn-primary " ng-click="myctrl.login() ">Login</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="row top-buffer " ng-if="myctrl.chatapp">
+            <div class="col-md-6 ">
+                <div class="panel panel-info ">
+                    <div class="panel-heading ">
+                        <h3 class="panel-title ">
+                            Online Users</h3>
+                    </div>
+                    <ul class="list-group tab-pane ">
+                        <div class="list-group-item " ng-repeat="user in myctrl.users ">
+                            {{user}}
+                        </div>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-6 ">
+                <div class="panel panel-info ">
+                    <div class="panel-heading ">
+                        <h3 class="panel-title ">
+                            Conversations</h3>
+                    </div>
+                    <ul class="list-group tab-pane-conversation ">
+                        <li class="col-md-12 " ng-repeat="msg in myctrl.messages ">
+                            <b>{{msg.username}}</b> - {{msg.message}}
+                        </li>
+                    </ul>
+                    <footer class="footer ">
+                        <div class="container ">
+                            <div class="row col-md-6 ">
+                                <form class="form-inline" role="form">
+                                    <div class="form-group ">
+                                        <input type="text " Placeholder="Enter Message" class="form-control" id="message" ng-model="myctrl.msg " />
+                                        <div class="col-md-1 pull-right">
+                                            <button type="submit " value="Send " ng-click="myctrl.sendData() " class="btn btn-primary">
+                                            Send
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.0/angular.min.js "></script>
+    <script src="https://cdn.socket.io/socket.io-1.4.5.js "></script>
+    <script>
+        var myapp = angular.module('myapp', []);
+
+        myapp.controller('myappController', ['$scope', function ($scope) {
+            var socket = io.connect();
+
+            var self = this;
+            self.title = "Welcome to chat application..!";
+            self.messages = [];
+            self.login = true;
+            self.chatapp = false;
+
+            self.login = function () {
+                socket.emit('new user', self.username, function (data) {
+                    if (data) {
+                        $scope.$apply(function () {
+                            self.login = false;
+                            self.chatapp = true;
+                        });
+                    }
+                });
+            };
+
+            self.sendData = function () {
+                //self.messages.push({ message: self.msg });
+                socket.emit('send message', self.msg);
+                self.msg = '';
+            };
+
+            socket.on('new message', function (data) {
+                $scope.$apply(function () {
+                    console.log(data);
+                    self.messages.push({ message: data.message, username: data.username });
+                });
+            });
+
+            socket.on('get users', function (data) {
+                $scope.$apply(function () {
+                    self.users = data;
+                });
+            });
+        }]);
+    </script>
+</body>
+
+</html>
